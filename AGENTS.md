@@ -41,6 +41,7 @@ Si la solicitud dice **«Modo: taller»**, la corrida completa debe caber en alr
 - Migración sobre la **plantilla aprobada** (`fabrica.py destino crear`), sin crear proyectos desde cero.
 - Como máximo **dos ciclos** de corrección entre Tester y Migrador. Si después de dos ciclos sigue fallando, se reporta y se detiene.
 - No preguntes lo que ya responden la solicitud o el catálogo. Pregunta solo lo que cambia el trabajo.
+- En la revisión, lo que el origen tampoco tiene (deuda heredada) lo decide Riesgo; no genera un ciclo de corrección.
 
 ## Reglas obligatorias
 
