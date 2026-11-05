@@ -3,7 +3,7 @@
   // Todo lo demás (git push, az, terraform apply, borrar archivos...) sigue pidiendo tu aprobación.
   // Las puertas humanas no cambian: las decides tú en el chat.
   "chat.tools.terminal.autoApprove": {
-    "/^(python3?|py -3) herramientas[\\\\/]fabrica\\.py (verificar|iniciar|evento|puerta|hallazgo|cerrar-hallazgo|estado|replay|preparar|archivar|origen|destino|medir)\\b/": true,
+    "/^(python3?|py -3) herramientas[\\\\/]fabrica\\.py (verificar|iniciar|evento|puerta|hallazgo|cerrar-hallazgo|estado|replay|costo|preparar|archivar|origen|destino|medir)\\b/": true,
     "/^(python3?|py -3) \\.github[\\\\/]skills[\\\\/][a-z-]+[\\\\/]scripts[\\\\/][a-z_]+\\.py\\b/": true,
     "/^dotnet (build|test|restore|list|--version)\\b/": true,
     "/^terraform( -chdir=\\S+)? (fmt|validate|version)\\b/": true,
