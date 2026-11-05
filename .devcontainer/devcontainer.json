@@ -2,12 +2,11 @@
   // Ambiente listo para correr la fábrica en GitHub Codespaces (o en Dev Containers con Docker):
   // Python 3.12, .NET 8 y Terraform, sin instalar nada en tu laptop.
   "name": "Fábrica de migración",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "build": { "dockerfile": "Dockerfile" },
   "features": {
-    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" },
-    "ghcr.io/devcontainers/features/terraform:1": {}
+    "ghcr.io/devcontainers/features/dotnet:2": { "version": "8.0" }
   },
-  "postCreateCommand": "dotnet restore plataforma/plantillas/dotnet-api/Plantilla.sln && python3 herramientas/fabrica.py verificar",
+  "postCreateCommand": "bash .devcontainer/preparar.sh",
   "forwardPorts": [5050, 5080],
   "portsAttributes": {
     "5050": { "label": "Origen (Python)" },
