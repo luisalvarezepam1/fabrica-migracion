@@ -8,7 +8,7 @@ Script: [scripts/jira.py](scripts/jira.py) (solo Python estándar). Lee la conex
 
 ## Configuración (la hace la persona, no el agente)
 
-Copiar `.env.example` a `.env` y completar `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` y `JIRA_PROYECTO`. Sin `.env`, el script trabaja en **modo local** (claves `LOCAL-n` y `artefactos/tablero-jira.md`).
+Copiar `.env.example` a `.env` y completar `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` y `JIRA_PROYECTO`. Sin `.env`, el script trabaja en **modo local**: claves `LOCAL-n` y un tablero en `corridas/<id>/tareas/` (`tablero.md` por columnas y un archivo por tarea con descripción, historial y comentarios). Los agentes trabajan igual en los dos modos. Con Jira, esa carpeta queda como espejo con enlaces.
 
 ## Formato de `plan-jira.json`
 

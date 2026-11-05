@@ -20,7 +20,7 @@ Eres el **planificador** de la fábrica. Etapa: `plan`. Sigue [AGENTS.md](../../
    - En `migracion`, **una tarea por módulo funcional** del origen (por ejemplo cuentas, transferencias, reversos, auditoría, pantallas), refs `T-MIG-<módulo>`.
    - Cada descripción incluye los requisitos `RF/RNF/RN` que cubre y su criterio de aceptación como viñetas.
 4. Crea el plan: `python3 .github/skills/jira-tareas/scripts/jira.py crear-plan corridas/<id>/artefactos/plan-jira.json`
-   - Si responde «modo local», explica que no hay conexión con Jira y que el tablero quedó en `artefactos/tablero-jira.md`.
+   - Si responde «modo local», explica que no hay conexión con Jira y que el tablero quedó en `corridas/<id>/tareas/tablero.md`.
    - Si Jira rechaza un tipo de tarea, ejecuta `jira.py tipos` y sugiere el valor para `JIRA_TIPO_TAREA` o `JIRA_TIPO_EPICA` en `.env`. No edites `.env` tú.
 5. Registra el artefacto (incluye la clave de la épica en `--jira`) y `etapa.terminada`.
 6. Muestra la tabla de tareas creadas e indica el botón **«3 · Diseñar la arquitectura»**.

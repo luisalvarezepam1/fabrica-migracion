@@ -9,7 +9,9 @@ Lee la conexión de .env en la raíz de la fábrica (nunca imprime el token):
   JIRA_TIPO_EPICA=Epic         (opcional; p. ej. "Épica" si tu Jira está en español)
   JIRA_TIPO_TAREA=Task         (opcional; p. ej. "Tarea")
 
-Sin .env (o con JIRA_MODO=local) trabaja en modo local: genera claves LOCAL-n y un tablero en Markdown.
+Sin .env (o con JIRA_MODO=local) trabaja en modo local: genera claves LOCAL-n y un tablero en Markdown
+en corridas/<id>/tareas/ (tablero.md y un archivo por tarea con descripción, historial y comentarios).
+Con Jira, esa misma carpeta queda como espejo con enlaces a cada incidencia.
 
   python3 jira.py probar
   python3 jira.py tipos
@@ -107,12 +109,51 @@ def leer_mapa(c):
     return json.loads(f.read_text(encoding="utf-8")) if f.exists() else None
 
 
+COLUMNAS = [("Por hacer", ["por hacer", "to do", "backlog", "selected for development"]),
+            ("En curso", ["en curso", "in progress", "en progreso", "en revisión", "in review"]),
+            ("Listo", ["listo", "done", "finalizado", "hecho"])]
+
+
+def _columna(estado):
+    e = (estado or "").lower()
+    return next((n for n, alias in COLUMNAS if e in alias), "Por hacer")
+
+
+def _ahora():
+    import datetime as dt
+    return dt.datetime.now().astimezone().isoformat(timespec="seconds")
+
+
 def tablero_local(c, mapa):
-    filas = ["# Tablero local de la migración", "", f"Épica **{mapa['epica']}** · {mapa['epica_resumen']}", "",
-             "| Clave | Ref | Etapa | Estado | Resumen |", "|---|---|---|---|---|"]
+    """Tablero en el repo: corridas/<id>/tareas/tablero.md y un archivo por tarea.
+    Se genera siempre: en modo local es el tablero; con Jira es un espejo con enlaces."""
+    d = c / "tareas"
+    d.mkdir(exist_ok=True)
+    url = (mapa.get("url") or "").rsplit("/browse/", 1)[0]
+    enlace = lambda k: f"[{k}]({url}/browse/{k})" if url else f"[{k}]({k}.md)"
+    filas = [f"# Tablero de la migración ({'Jira ' + mapa['proyecto'] if mapa['modo'] == 'jira' else 'local'})", "",
+             f"Épica {enlace(mapa['epica'])} · **{mapa['epica_resumen']}**", ""]
+    if mapa["modo"] == "local":
+        filas += ["> Sin conexión a Jira: las tareas viven en esta carpeta. Cada agente las mueve y comenta igual que en Jira.", ""]
+    for col, _ in COLUMNAS:
+        tareas = [(r, t) for r, t in mapa["tareas"].items() if _columna(t.get("estado")) == col]
+        filas += [f"## {col} ({len(tareas)})", ""]
+        filas += [f"- {enlace(t['clave'])} · {t['resumen']} · _{t.get('etapa') or ''}_ · ref `{r}`" for r, t in tareas] or ["- —"]
+        filas.append("")
+    (d / "tablero.md").write_text("\n".join(filas), encoding="utf-8")
+    epica = [f"# {mapa['epica']} · {mapa['epica_resumen']} (épica)", "", mapa.get("epica_descripcion") or "", "", "## Tareas", ""]
+    epica += [f"- [{t['clave']}]({t['clave']}.md) · {t['resumen']} · {t.get('estado', 'Por hacer')}" for t in mapa["tareas"].values()]
+    (d / f"{mapa['epica']}.md").write_text("\n".join(epica) + "\n", encoding="utf-8")
     for ref, t in mapa["tareas"].items():
-        filas.append(f"| {t['clave']} | {ref} | {t.get('etapa', '')} | {t.get('estado', 'Por hacer')} | {t['resumen']} |")
-    (c / "artefactos" / "tablero-jira.md").write_text("\n".join(filas) + "\n", encoding="utf-8")
+        cuerpo = [f"# {t['clave']} · {t['resumen']}", "",
+                  f"- **Épica:** {mapa['epica']} · {mapa['epica_resumen']}",
+                  f"- **Ref:** `{ref}` · **Etapa:** {t.get('etapa') or '—'} · **Estado:** {t.get('estado', 'Por hacer')}",
+                  "" if mapa["modo"] == "local" else f"- **En Jira:** {url}/browse/{t['clave']}", "",
+                  "## Descripción", "", t.get("descripcion") or "—", "", "## Historial", ""]
+        cuerpo += [f"- {h['ts']} · {h['estado']}" for h in t.get("historial", [])] or ["- —"]
+        cuerpo += ["", "## Comentarios", ""]
+        cuerpo += [f"- {k['ts']} · {k['texto']}" for k in t.get("comentarios", [])] or ["- —"]
+        (d / f"{t['clave']}.md").write_text("\n".join(cuerpo) + "\n", encoding="utf-8")
 
 
 def cmd_probar():
@@ -142,25 +183,28 @@ def cmd_crear_plan(archivo):
     etiquetas = ["fabrica-migracion", est["id"].lower()]
     mapa = {"modo": "local" if LOCAL else "jira", "tareas": {}}
     if LOCAL:
-        mapa.update(proyecto="LOCAL", epica="LOCAL-1", epica_resumen=plan["epica"]["resumen"])
+        mapa.update(proyecto="LOCAL", epica="LOCAL-1", epica_resumen=plan["epica"]["resumen"], epica_descripcion=plan["epica"].get("descripcion", ""))
         for n, it in enumerate(plan["tareas"], start=2):
-            mapa["tareas"][it["ref"]] = {"clave": f"LOCAL-{n}", "resumen": it["resumen"], "etapa": it.get("etapa"), "estado": "Por hacer"}
+            mapa["tareas"][it["ref"]] = {"clave": f"LOCAL-{n}", "resumen": it["resumen"], "etapa": it.get("etapa"), "estado": "Por hacer",
+                                         "descripcion": it.get("descripcion", ""), "historial": [{"ts": _ahora(), "estado": "Por hacer"}], "comentarios": []}
         guardar_mapa(c, mapa)
         tablero_local(c, mapa)
-        print(f"Modo local: épica LOCAL-1 y {len(plan['tareas'])} tareas -> {c.relative_to(RAIZ)}/artefactos/tablero-jira.md")
+        print(f"Modo local: épica LOCAL-1 y {len(plan['tareas'])} tareas -> {c.relative_to(RAIZ)}/tareas/tablero.md")
         return
     proyecto = ENV["JIRA_PROYECTO"]
     t_epica, t_tarea = ENV.get("JIRA_TIPO_EPICA", "Epic"), ENV.get("JIRA_TIPO_TAREA", "Task")
     ep = api("POST", "/rest/api/3/issue", {"fields": {"project": {"key": proyecto}, "issuetype": {"name": t_epica}, "summary": plan["epica"]["resumen"],
                                                       "description": adf(plan["epica"].get("descripcion", "")), "labels": etiquetas}})
-    mapa.update(proyecto=proyecto, epica=ep["key"], epica_resumen=plan["epica"]["resumen"], url=f"{ENV['JIRA_URL'].rstrip('/')}/browse/{ep['key']}")
+    mapa.update(proyecto=proyecto, epica=ep["key"], epica_resumen=plan["epica"]["resumen"], epica_descripcion=plan["epica"].get("descripcion", ""), url=f"{ENV['JIRA_URL'].rstrip('/')}/browse/{ep['key']}")
     for it in plan["tareas"]:
         campos = {"project": {"key": proyecto}, "issuetype": {"name": it.get("tipo", t_tarea)}, "summary": it["resumen"],
                   "description": adf(it.get("descripcion", "")), "labels": etiquetas + ([f"etapa-{it['etapa']}"] if it.get("etapa") else []), "parent": {"key": ep["key"]}}
         r = api("POST", "/rest/api/3/issue", {"fields": campos})
-        mapa["tareas"][it["ref"]] = {"clave": r["key"], "resumen": it["resumen"], "etapa": it.get("etapa"), "estado": "Por hacer"}
+        mapa["tareas"][it["ref"]] = {"clave": r["key"], "resumen": it["resumen"], "etapa": it.get("etapa"), "estado": "Por hacer",
+                                     "descripcion": it.get("descripcion", ""), "historial": [{"ts": _ahora(), "estado": "Por hacer"}], "comentarios": []}
         guardar_mapa(c, mapa)
-    print(f"Jira: épica {ep['key']} y {len(plan['tareas'])} tareas creadas · {mapa['url']}")
+    tablero_local(c, mapa)
+    print(f"Jira: épica {ep['key']} y {len(plan['tareas'])} tareas creadas · {mapa['url']} · espejo en {c.relative_to(RAIZ)}/tareas/tablero.md")
 
 
 def resolver(c, clave):
@@ -183,15 +227,16 @@ def cmd_mover(clave, estado):
     if not LOCAL and mapa["modo"] == "jira":
         trs = api("GET", f"/rest/api/3/issue/{key}/transitions")["transitions"]
         candidatos = [estado.lower()] + ALIAS_ESTADOS.get(estado.lower(), [])
-        objetivo = next((t for c in candidatos for t in trs if t["name"].lower() == c or t["to"]["name"].lower() == c), None)
+        objetivo = next((t for cand in candidatos for t in trs if t["name"].lower() == cand or t["to"]["name"].lower() == cand), None)
         if not objetivo:
             sys.exit(f"Transiciones disponibles para {key}: {', '.join(t['name'] + ' -> ' + t['to']['name'] for t in trs)}")
         api("POST", f"/rest/api/3/issue/{key}/transitions", {"transition": {"id": objetivo["id"]}})
     if ref:
-        mapa["tareas"][ref]["estado"] = estado
+        t = mapa["tareas"][ref]
+        t["estado"] = _columna(estado)
+        t.setdefault("historial", []).append({"ts": _ahora(), "estado": t["estado"]})
         guardar_mapa(c, mapa)
-        if mapa["modo"] == "local":
-            tablero_local(c, mapa)
+        tablero_local(c, mapa)
     print(f"{key} -> {estado}")
 
 
@@ -200,9 +245,10 @@ def cmd_comentar(clave, texto):
     mapa, ref, key = resolver(c, clave)
     if not LOCAL and mapa["modo"] == "jira":
         api("POST", f"/rest/api/3/issue/{key}/comment", {"body": adf(texto)})
-    else:
-        with open(c / "artefactos" / "comentarios-jira.md", "a", encoding="utf-8") as f:
-            f.write(f"- **{key}**: {texto}\n")
+    if ref:
+        mapa["tareas"][ref].setdefault("comentarios", []).append({"ts": _ahora(), "texto": texto})
+        guardar_mapa(c, mapa)
+        tablero_local(c, mapa)
     print(f"Comentario agregado a {key}")
 
 
