@@ -86,7 +86,7 @@ def cmd_verificar(_a):
     ver(".NET SDK 8+", ["dotnet", "--version"], (8, 0))
     ver("Git", ["git", "--version"])
     ver("Terraform 1.9+ (opcional para validar infra)", ["terraform", "version"], (1, 9), obligatorio=False)
-    ver("Azure CLI (solo facilitador)", ["az", "version", "--output", "none"], obligatorio=False)
+    ver("Azure CLI (solo facilitador)", ["az", "version", "--query", "\"azure-cli\"", "--output", "tsv"], obligatorio=False)
     env = (RAIZ / ".env").exists()
     filas.append(("Archivo .env de Jira (opcional)", env, "presente" if env else "sin .env: Jira en modo local", False))
 
