@@ -105,9 +105,10 @@ def calcular(corrida, raiz, etapas):
             continue
         for req in sesion.get("requests", []):
             ts = req.get("timestamp") or 0
-            if not (desde <= ts <= hasta):
-                continue
             ag = _agente(req)
+            # Solo la solicitud del agente Fabrica puede empezar antes (es la que inicia la corrida).
+            if not ((desde if ag == "Fabrica" else desde + 10 * 60 * 1000) <= ts <= hasta):
+                continue
             fila = por_agente.setdefault(ag, {"etapa": etapa_de.get(ag.lower(), "otra"), "solicitudes": 0, "tokens_entrada": 0, "tokens_salida": 0, "creditos": 0.0})
             for destino in (fila, total):
                 destino["solicitudes"] += 1
