@@ -42,6 +42,10 @@ Script: [scripts/contrato.py](scripts/contrato.py) (solo Python estándar).
 - `ignorar` reemplaza campos volátiles por `<volátil>` en cualquier nivel.
 - `esperado` en un paso (`{"estado": 200, "cuerpo": {...}}`) reemplaza la referencia del origen. **Solo** se agrega cuando el dueño de negocio decidió corregir un comportamiento del origen.
 
+## Antes de capturar
+
+Confirma que `--base` responde `GET /api/salud` con `"estado": "ok"`. En macOS el puerto 5000 lo ocupa AirPlay Receiver: usa 5050 para el origen y 5080 para el destino.
+
 ## Buenas prácticas
 
 - Verifica **efectos**, no solo respuestas: después de cada operación consulta saldos y movimientos.
@@ -51,7 +55,7 @@ Script: [scripts/contrato.py](scripts/contrato.py) (solo Python estándar).
 ## Comandos
 
 ```bash
-python3 .github/skills/pruebas-de-contrato/scripts/contrato.py capturar --base http://127.0.0.1:5000 \
+python3 .github/skills/pruebas-de-contrato/scripts/contrato.py capturar --base http://127.0.0.1:5050 \
   --casos corridas/<id>/artefactos/pruebas-contrato/casos.json \
   --salida corridas/<id>/artefactos/pruebas-contrato/referencia.json
 

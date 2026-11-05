@@ -13,7 +13,7 @@ Eres el **caracterizador (QA)** de la fábrica. Etapa: `caracterizacion`. Sigue 
 ## Pasos
 
 1. Registra `etapa.iniciada` y mueve `T-CAR` a «En curso».
-2. Levanta el origen **en local** desde `fuente/` (por ejemplo `python3 -m venv .venv-fuente && .venv-fuente/bin/pip install -r fuente/requirements.txt` y luego `cd fuente && DATABASE_PATH=/tmp/fabrica-origen.db ../.venv-fuente/bin/python wsgi.py` en segundo plano) y confirma `GET /api/salud`. Si no puedes, usa la URL del origen en ejecución que trae la solicitud.
+2. Levanta el origen **en local** desde `fuente/` (por ejemplo `python3 -m venv .venv-fuente && .venv-fuente/bin/pip install -r fuente/requirements.txt` y luego `cd fuente && PORT=5050 DATABASE_PATH=/tmp/fabrica-origen.db ../.venv-fuente/bin/python wsgi.py` en segundo plano) y confirma `GET http://127.0.0.1:5050/api/salud` y que responda `"estado": "ok"`. **No uses el puerto 5000:** en macOS lo ocupa AirPlay Receiver y respondería otro servicio. Si no puedes, usa la URL del origen en ejecución que trae la solicitud.
 3. Escribe `corridas/<id>/artefactos/pruebas-contrato/casos.json`. Mínimo un caso por regla `RN-n` y por código de error del inventario. Incluye siempre:
    - caminos felices de cada tipo de operación;
    - **montos que caen justo en medio centavo** al calcular porcentajes;
