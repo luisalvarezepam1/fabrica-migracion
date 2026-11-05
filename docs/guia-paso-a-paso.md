@@ -59,4 +59,48 @@ Completa `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` (créalo en https://id.atlassian
 
 ## Paso 6 · Iniciar la corrida
 
+1. Abre un chat nuevo (**+**). **Cada chat nuevo vuelve al harness Copilot:** antes de escribir, elige otra vez **Local**. Si no, `/iniciar-migracion` no aparece, porque el harness Copilot no carga los comandos.
+2. Escribe y envía:
+   ```
+   /iniciar-migracion solicitudes/transferencias-inmediatas-a-dotnet.md
+   ```
+   El comando cambia solo al agente **Fabrica**.
+3. Aprueba solo estos comandos: `fabrica.py verificar`, `fabrica.py iniciar …`, `jira.py probar` y `fabrica.py estado`.
+4. Resultado esperado:
+   - una corrida nueva, `corridas/MIG-<fecha>-<hora>/`, con `solicitud.md`, `estado.json` y `eventos.jsonl`;
+   - la carpeta `fuente/` con la app de origen en Python;
+   - la tabla de estado: 9 etapas pendientes y 5 puertas humanas;
+   - el botón **«1 · Analizar el requerimiento»**.
+
+> **Sin el comando:** si `/iniciar-migracion` no aparece, elige el agente **Fabrica** y escribe: «Inicia una corrida de la fábrica con la solicitud solicitudes/transferencias-inmediatas-a-dotnet.md. Verifica el ambiente, inicia la corrida, prueba Jira y muéstrame el estado. No avances a la siguiente etapa».
+
+**Primera corrida:** corrida `MIG-20261104-224342`. El origen se clonó en `fuente/` y quedaron las 9 etapas pendientes. Las tareas de Jira todavía no se crean: eso lo hace el Planificador en la etapa 2.
+
+## Paso 7 · Etapa 1: análisis del requerimiento (Analista)
+
+1. Da clic en **«1 · Analizar el requerimiento»**. El agente cambia a **Analista** y deja el mensaje escrito; envíalo.
+2. Aprueba los comandos `fabrica.py evento …` (y `fabrica.py hallazgo …` si aparecen). El agente lee la solicitud, el catálogo y `fuente/`.
+3. Escribe `corridas/<id>/artefactos/analisis.md`. Da clic en **Keep** para conservarlo.
+4. **Puerta del líder.** El agente pregunta «¿Apruebas el análisis? Indica tu nombre y, si hay cambios, cuáles». Antes de responder, **lee el análisis**: resumen, requisitos `RF/RNF`, reglas `RN`, riesgos y **preguntas abiertas**. Responde con tu nombre, tu decisión y las respuestas a las preguntas abiertas.
+5. El agente agrega tus respuestas al análisis como «Acuerdos de aprobación», registra la puerta con tu nombre y cierra la etapa.
+
+**Primera corrida:** 4 requisitos funcionales, 5 no funcionales, 8 reglas de negocio, 7 riesgos y 3 preguntas abiertas. Las preguntas fueron: dónde se pueden hacer pruebas que cambian datos, qué perfil de carga usar para el p95 y qué Application Insights usar. Respuestas del líder: las pruebas que cambian datos van solo contra el origen local, y contra Azure solo lecturas (GET); 50 llamadas secuenciales y 5 concurrentes; el Application Insights que crea el módulo aprobado. La puerta se resolvió en unos 5 minutos, y con las respuestas el Analista agregó un riesgo nuevo: la equivalencia entre local y producción.
+
+## Paso 8 · Etapa 2: plan en Jira (Planificador)
+
+1. Da clic en **Keep** para conservar los cambios del análisis y luego en **«2 · Crear el plan en Jira»**. El agente cambia a **Planificador**; envía el mensaje.
+2. Aprueba `fabrica.py estado`, `fabrica.py evento …` y `jira.py crear-plan …`. Da **Keep** a `plan-jira.json`.
+3. Resultado:
+   - **Con `.env`:** una épica y sus tareas en Jira, más un espejo en `corridas/<id>/tareas/` con `tablero.md` y un archivo por tarea con enlace a Jira.
+   - **Sin `.env`:** las mismas tareas como `LOCAL-n` en `corridas/<id>/tareas/`, con su tablero por columnas.
+
+**Primera corrida:** épica **MIG-1** y 14 tareas, creadas en unos 3 minutos:
+
+- 6 tareas de etapa: arquitectura, caracterización, pruebas, revisión, plataforma y documentación;
+- 8 tareas de migración, una por módulo: clientes, cuentas, movimientos, transferencias, reversos, auditoría, modo demo y pantallas.
+
+Cada descripción indica qué requisitos `RF/RNF/RN` cubre y su criterio de aceptación.
+
+## Paso 9 · Etapa 3: arquitectura (Arquitecto)
+
 _En curso._

@@ -3,9 +3,9 @@ name: Analista
 description: Analiza la solicitud de migración del líder, detecta huecos y riesgos, y produce un análisis verificable para su aprobación.
 tools: ['read', 'search', 'edit', 'execute', 'todo']
 handoffs:
-  - label: "2 · Crear el plan en Jira"
+  - label: "2 · Crear el plan de trabajo"
     agent: Planificador
-    prompt: El líder aprobó el análisis. Crea el plan de trabajo de la migración en Jira.
+    prompt: El líder aprobó el análisis. Crea el plan de trabajo de la migración (en Jira si hay conexión; si no, en el tablero local).
     send: false
   - label: "Ajustar el análisis"
     agent: Analista
@@ -36,7 +36,7 @@ Eres el **analista de requerimientos** de la fábrica. Etapa: `analisis`. Sigue 
 4. Registra el artefacto y cualquier hallazgo (por ejemplo, requisitos contradictorios o no verificables).
 5. **Puerta del líder:** registra `puerta.solicitada` y presenta en el chat el resumen, las preguntas abiertas y los riesgos principales. Pregunta: «¿Apruebas el análisis? Indica tu nombre y, si hay cambios, cuáles».
 6. Cuando la persona responda, registra la decisión con `fabrica.py puerta --etapa analisis --rol "Líder solicitante" ...`. Si pide cambios, ajusta y vuelve al paso 5.
-7. Registra `etapa.terminada` e indica el botón **«2 · Crear el plan en Jira»**.
+7. Registra `etapa.terminada` e indica el botón **«2 · Crear el plan de trabajo»**.
 
 ## Límites
 
