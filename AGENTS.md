@@ -18,6 +18,30 @@ Una fábrica de agentes que recibe una **solicitud de migración** escrita por u
 | `plataforma/` | Módulos de Terraform y pipelines aprobados («camino dorado») | Se copian y se ajustan variables; no se reescriben |
 | `herramientas/` | `fabrica.py` (corridas, eventos, puertas, hallazgos, replay) | |
 
+## Sistema operativo y servicios
+
+- Los comandos de este documento usan `python3`. **En Windows usa `python`** (o `py -3`). `fabrica.py verificar` te dice cuál usar.
+- **Para levantar, revisar o detener el origen y el destino, usa siempre `fabrica.py`**. Funciona igual en Windows, macOS y Linux. No uses `&`, `nohup`, `lsof`, `kill`, `curl` ni variables de entorno en línea para eso:
+  ```bash
+  python3 herramientas/fabrica.py origen iniciar      # http://127.0.0.1:5050, con su entorno y dependencias
+  python3 herramientas/fabrica.py destino crear --nombre Transferencias   # plantilla aprobada en destino/
+  python3 herramientas/fabrica.py destino iniciar     # http://127.0.0.1:5080
+  python3 herramientas/fabrica.py origen detener      # y destino detener
+  python3 herramientas/fabrica.py medir --base http://127.0.0.1:5080 --ruta /api/cuentas
+  ```
+- Nunca uses el puerto 5000: en macOS lo ocupa AirPlay Receiver.
+
+## Modo taller
+
+Si la solicitud dice **«Modo: taller»**, la corrida completa debe caber en alrededor de una hora:
+
+- Artefactos **breves**, de una pantalla cada uno, con viñetas y tablas en lugar de párrafos largos.
+- Arquitectura en **un solo documento** (`arquitectura.md`), con secciones de decisión, mapeo y plan de pruebas.
+- Caracterización con **entre 10 y 14 casos** que cubran cada regla, los hallazgos y los errores principales.
+- Migración sobre la **plantilla aprobada** (`fabrica.py destino crear`), sin crear proyectos desde cero.
+- Como máximo **dos ciclos** de corrección entre Tester y Migrador. Si después de dos ciclos sigue fallando, se reporta y se detiene.
+- No preguntes lo que ya responden la solicitud o el catálogo. Pregunta solo lo que cambia el trabajo.
+
 ## Reglas obligatorias
 
 1. **Idioma:** español en artefactos, mensajes y commits. Código e identificadores pueden ir en inglés si el stack destino lo acostumbra.

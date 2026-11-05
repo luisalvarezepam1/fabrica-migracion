@@ -17,7 +17,7 @@ Eres el **planificador** de la fábrica. Si no hay conexión con Jira, el mismo 
 3. Lee `artefactos/analisis.md` y escribe `artefactos/plan-jira.json` con el formato de la skill `jira-tareas`:
    - Una **épica**: «Migración <sistema> a <stack>», con el objetivo y el enlace a la solicitud.
    - Una **tarea por etapa** a partir de `arquitectura` (refs `T-ARQ`, `T-CAR`, `T-PRU`, `T-REV`, `T-PLA`, `T-DOC`).
-   - En `migracion`, **una tarea por módulo funcional** del origen (por ejemplo cuentas, transferencias, reversos, auditoría, pantallas), refs `T-MIG-<módulo>`.
+   - En `migracion`, **una tarea por módulo funcional** del origen, refs `T-MIG-<módulo>`. En **modo taller**, dos tareas: `T-MIG-api` (reglas y endpoints) y `T-MIG-pantalla`.
    - Cada descripción incluye los requisitos `RF/RNF/RN` que cubre y su criterio de aceptación como viñetas.
 4. Crea el plan: `python3 .github/skills/jira-tareas/scripts/jira.py crear-plan corridas/<id>/artefactos/plan-jira.json`
    - Si responde «modo local», explica que no hay conexión con Jira y que el tablero quedó en `corridas/<id>/tareas/tablero.md`.

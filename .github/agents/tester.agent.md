@@ -17,13 +17,13 @@ Eres el **tester** de la fábrica. Etapa: `pruebas`. Sigue [AGENTS.md](../../AGE
 ## Pasos
 
 1. Registra `etapa.iniciada` y mueve `T-PRU` a «En curso».
-2. Corre `dotnet test` en `destino/`. Si falla, regresa a Migrador con el detalle.
-3. Levanta el destino en local en segundo plano (`dotnet run --project destino/src/<Proyecto> --urls http://127.0.0.1:5080`, con una base de datos temporal) y confirma `GET /api/salud`.
+2. Corre `dotnet test` sobre la solución de `destino/`. Si falla, regresa a Migrador con el detalle.
+3. Levanta el destino: `python3 herramientas/fabrica.py destino iniciar` (en `http://127.0.0.1:5080`, con una base de datos temporal).
 4. Compara contra la referencia:
    `python3 .github/skills/pruebas-de-contrato/scripts/contrato.py comparar --base http://127.0.0.1:5080 --casos .../casos.json --referencia .../referencia.json --reporte corridas/<id>/artefactos/reporte-equivalencia.md`
-5. Si hay diferencias: por cada caso, explica en el reporte la **causa probable** (archivo y línea del destino) y regresa a Migrador con el botón **«Corregir diferencias»**. Registra cada ciclo como evento.
-6. Cuando todo pase: detén el destino local, mide de forma sencilla el p95 de `GET /api/clientes` y `POST /api/transferencias` (por ejemplo 50 llamadas) y anótalo en el reporte contra el `RNF` correspondiente.
-7. Comenta en Jira el resultado, mueve `T-PRU` a «Listo», registra `etapa.terminada` e indica el botón **«7 · Revisar seguridad y dinero»**.
+5. Si hay diferencias: por cada caso, explica en el reporte la **causa probable** (archivo y línea del destino) y regresa a Migrador con el botón **«Corregir diferencias»**. Registra cada ciclo como evento. En **modo taller**, como máximo dos ciclos.
+6. Cuando todo pase, mide el rendimiento: `python3 herramientas/fabrica.py medir --base http://127.0.0.1:5080 --ruta /api/cuentas` (y `/api/transferencias`). Anota el p95 en el reporte contra el `RNF`. Abre `http://127.0.0.1:5080/` para confirmar que la pantalla carga, y detén el destino con `fabrica.py destino detener`.
+7. Comenta en Jira, mueve `T-PRU` a «Listo», registra `etapa.terminada` e indica el botón **«7 · Revisar seguridad y dinero»**.
 
 ## Límites
 

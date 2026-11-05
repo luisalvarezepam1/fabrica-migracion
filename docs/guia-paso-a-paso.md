@@ -1,5 +1,7 @@
 # Guía paso a paso: correr la fábrica en VS Code
 
+> **Nota:** los pasos 1 a 10 se documentaron con una primera corrida sobre la versión completa del origen (v1.4). La fábrica ahora corre en **modo taller**, con un módulo y su pantalla, y se está documentando con una corrida nueva. Los pasos son los mismos; cambian los tiempos y el tamaño de los artefactos.
+
 Esta guía se arma con la primera corrida real de la fábrica. Cada paso dice qué hacer, qué debes ver y qué hacer si algo sale distinto.
 
 ## Antes de empezar
@@ -102,5 +104,38 @@ Completa `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` (créalo en https://id.atlassian
 Cada descripción indica qué requisitos `RF/RNF/RN` cubre y su criterio de aceptación.
 
 ## Paso 9 · Etapa 3: arquitectura (Arquitecto)
+
+1. Da clic en **«3 · Diseñar la arquitectura»** y envía el mensaje. La tarea de arquitectura pasa a **En curso** en Jira o en el tablero local.
+2. Aprueba `inventario.py …`, `fabrica.py evento …`, `fabrica.py hallazgo …` y `jira.py mover/comentar …`. Da **Keep** a: `inventario.md/json`, `arquitectura.md`, `adr-001-stack.md`, `mapeo-origen-destino.md` y `plan-de-pruebas.md`.
+3. **Puerta del arquitecto.** Lee el diseño y, sobre todo, **los hallazgos**. Si hay hallazgos altos abiertos, la herramienta exige una justificación escrita para aprobar: explica por qué apruebas igual (por ejemplo, porque los decide el negocio en la etapa 4).
+
+**Primera corrida (unos 7 minutos):** solo leyendo el código, el Arquitecto encontró 4 hallazgos:
+
+- **H01 (alto):** la documentación dice límite diario DOP 300,000 y el código aplica 500,000. Además, la prueba existente no distingue entre los dos valores.
+- **H02 (alto):** una repetición idempotente vuelve a cobrar la comisión, porque se cobra antes de revisar la clave. La prueba existente no lo detecta porque usa una transferencia propia, sin comisión.
+- **H03 (alto):** hay un máximo por operación sin documentar.
+- **H04 (medio):** la API devuelve HTTP 405, que no está documentado.
+
+También señaló que `Math.Round` redondea al par y fijó `MidpointRounding.AwayFromZero`. El diseño se aprobó con justificación, y los hallazgos quedaron abiertos para el dueño de negocio.
+
+## Paso 10 · Etapa 4: caracterización del origen (Caracterizador)
+
+> **macOS:** el puerto 5000 lo ocupa AirPlay Receiver. El origen se levanta en el **5050** y el destino en el **5080**.
+
+1. Da clic en **«4 · Caracterizar el origen»** y envía el mensaje.
+2. Aprueba la creación del entorno (`python3 -m venv .venv-fuente`, `pip install -r fuente/requirements.txt`), el arranque del origen en `127.0.0.1:5050`, las llamadas `curl` locales y `contrato.py capturar --base http://127.0.0.1:5050 …`. **Elige Skip** si ves un `POST` o un `capturar` contra la URL de Azure, o cualquier cosa en el puerto 5000.
+3. Da **Keep** a `casos.json`, `referencia.json` y `caracterizacion.md`.
+4. **Puerta del dueño de negocio.** El agente presenta cada hallazgo con su evidencia y dos opciones: **preservar** o **corregir**. Decide uno por uno. Para lo que decidas corregir, el agente agrega un resultado `esperado` en `casos.json`, y ese resultado lo exigirá el Tester al destino.
+
+**Primera corrida (unos 17 minutos):** 35 casos y 151 pasos contra el origen local. La referencia confirmó con datos los cuatro hallazgos:
+
+- **H01:** DOP 300,000.01 pasa y el límite real es 500,000.
+- **H02:** la repetición devuelve la misma transferencia, pero baja el saldo DOP 10.00 y crea un movimiento de comisión nuevo.
+- **H03:** el máximo de DOP 10,000,000.00 existe.
+- **H04:** el 405 en JSON existe.
+
+Decisiones del negocio: **preservar** H01, H03 y H04 (y documentarlos), y **corregir** H02. En el caso de H02, los pasos 6 y 7 tienen ahora como `esperado` el saldo y los movimientos sin la segunda comisión. Al terminar, el agente detuvo el origen local.
+
+## Paso 11 · Etapa 5: migración del código (Migrador)
 
 _En curso._

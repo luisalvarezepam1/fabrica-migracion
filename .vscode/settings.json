@@ -1,0 +1,21 @@
+{
+  // Aprobación automática SOLO de los comandos seguros de la fábrica, para que la corrida no se detenga en cada paso.
+  // Todo lo demás (git push, az, terraform apply, borrar archivos...) sigue pidiendo tu aprobación.
+  // Las puertas humanas no cambian: las decides tú en el chat.
+  "chat.tools.terminal.autoApprove": {
+    "/^(python3?|py -3) herramientas[\\\\/]fabrica\\.py (verificar|iniciar|evento|puerta|hallazgo|cerrar-hallazgo|estado|replay|preparar|archivar|origen|destino|medir)\\b/": true,
+    "/^(python3?|py -3) \\.github[\\\\/]skills[\\\\/][a-z-]+[\\\\/]scripts[\\\\/][a-z_]+\\.py\\b/": true,
+    "/^dotnet (build|test|restore|list|--version)\\b/": true,
+    "/^terraform( -chdir=\\S+)? (fmt|validate|version)\\b/": true,
+    "/^terraform( -chdir=\\S+)? init -backend=false\\b/": true,
+    "git push": false,
+    "az": false,
+    "/^terraform( -chdir=\\S+)? (apply|plan|destroy)\\b/": false
+  },
+  "chat.tools.edits.autoApprove": {
+    "destino/**": true,
+    "corridas/**": true,
+    "**/.env": false,
+    "fuente/**": false
+  }
+}

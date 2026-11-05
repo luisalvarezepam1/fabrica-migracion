@@ -9,6 +9,14 @@ Uso:
   python3 herramientas/fabrica.py estado
   python3 herramientas/fabrica.py replay
 
+Servicios (iguales en Windows, macOS y Linux; en Windows usa `python` en lugar de `python3`):
+  python3 herramientas/fabrica.py preparar                     # dependencias del origen y paquetes de la plantilla .NET
+  python3 herramientas/fabrica.py origen iniciar|salud|detener  # origen en http://127.0.0.1:5050
+  python3 herramientas/fabrica.py destino crear --nombre Transferencias   # copia la plantilla aprobada a destino/
+  python3 herramientas/fabrica.py destino iniciar|salud|detener # destino en http://127.0.0.1:5080
+  python3 herramientas/fabrica.py medir --base http://127.0.0.1:5080 --ruta /api/cuentas
+  python3 herramientas/fabrica.py archivar                     # guarda la corrida activa, fuente/ y destino/ en corridas/archivo/
+
 Todo queda en corridas/<id>/: solicitud, estado.json, eventos.jsonl y los artefactos de cada etapa.
 """
 import argparse
@@ -21,6 +29,9 @@ import re
 import shutil
 import subprocess
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import servicios  # noqa: E402
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 CORRIDAS = RAIZ / "corridas"
@@ -72,7 +83,8 @@ def cmd_verificar(_a):
 
     def ver(nombre, cmd, minimo=None, obligatorio=True):
         try:
-            out = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            exe = shutil.which(cmd[0]) or cmd[0]  # en Windows resuelve .cmd/.exe (az.cmd, dotnet.exe)
+            out = subprocess.run([exe] + cmd[1:], capture_output=True, text=True, timeout=30)
             texto = (out.stdout or out.stderr).strip().splitlines()[0] if (out.stdout or out.stderr) else ""
             ok = out.returncode == 0
             if ok and minimo:
@@ -89,8 +101,18 @@ def cmd_verificar(_a):
     ver("Azure CLI (solo facilitador)", ["az", "version", "--query", "\"azure-cli\"", "--output", "tsv"], obligatorio=False)
     env = (RAIZ / ".env").exists()
     filas.append(("Archivo .env de Jira (opcional)", env, "presente" if env else "sin .env: Jira en modo local", False))
+    import urllib.request
+    for nombre, url in (("Acceso a PyPI (paquetes de Python)", "https://pypi.org/simple/flask/"), ("Acceso a NuGet (paquetes .NET)", "https://api.nuget.org/v3/index.json")):
+        try:
+            with urllib.request.urlopen(url, timeout=8) as r:
+                filas.append((nombre, r.status == 200, f"HTTP {r.status}", False))
+        except Exception as e:  # proxy corporativo, sin red, etc.
+            filas.append((nombre, False, f"sin acceso ({type(e).__name__}); corre `preparar` en una red con acceso o configura el proxy", False))
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    if proxy:
+        filas.append(("Proxy HTTPS", True, "configurado", False))
 
-    print(f"Sistema: {platform.system()} {platform.machine()}\n")
+    print(f"Sistema: {platform.system()} {platform.machine()} · usa `{'python' if os.name == 'nt' else 'python3'}` para los comandos de la fábrica\n")
     falta = False
     for nombre, ok, texto, obligatorio in filas:
         marca = "OK " if ok else ("FALTA" if obligatorio else "--  ")
@@ -227,10 +249,55 @@ def cmd_replay(_a):
     return 0
 
 
+def cmd_archivar(_a):
+    """Mueve la corrida activa, fuente/ y destino/ a corridas/archivo/<id>/ (no borra nada) para empezar de cero."""
+    for cual in ("origen", "destino"):
+        servicios.detener(cual)
+    cid = ACTUAL.read_text().strip() if ACTUAL.exists() else dt.datetime.now().strftime("sin-corrida-%Y%m%d-%H%M%S")
+    archivo = CORRIDAS / "archivo" / cid
+    archivo.mkdir(parents=True, exist_ok=True)
+    movidos = []
+    if (CORRIDAS / cid).is_dir():
+        shutil.move(str(CORRIDAS / cid), str(archivo / "corrida")); movidos.append(f"corridas/{cid}")
+    for carpeta in ("fuente", "destino", ".venv-fuente"):
+        if (RAIZ / carpeta).exists():
+            shutil.move(str(RAIZ / carpeta), str(archivo / carpeta)); movidos.append(carpeta)
+    if ACTUAL.exists():
+        ACTUAL.unlink()
+    print(json.dumps({"archivado_en": str(archivo.relative_to(RAIZ)), "movidos": movidos}, ensure_ascii=False))
+    return 0
+
+
+def cmd_servicio(a):
+    if a.cmd == "preparar":
+        servicios.preparar_origen()
+        servicios.preparar_destino()
+        print("Dependencias listas: origen (.venv-fuente) y paquetes NuGet de la plantilla.")
+        return 0
+    if a.cmd == "medir":
+        return servicios.medir(a.base, a.ruta, a.n, a.concurrentes)
+    if a.cmd == "destino" and a.accion == "crear":
+        if not a.nombre:
+            sys.exit("Indica --nombre, por ejemplo --nombre Transferencias")
+        return servicios.crear_destino(a.nombre) or 0
+    if a.accion == "iniciar":
+        return servicios.iniciar(a.cmd, a.puerto)
+    if a.accion == "detener":
+        return servicios.detener(a.cmd)
+    return servicios.estado_servicio(a.cmd)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     s = p.add_subparsers(dest="cmd", required=True)
     s.add_parser("verificar").set_defaults(f=cmd_verificar)
+    s.add_parser("preparar").set_defaults(f=cmd_servicio)
+    s.add_parser("archivar").set_defaults(f=cmd_archivar)
+    o = s.add_parser("origen"); o.add_argument("accion", choices=["iniciar", "salud", "detener"]); o.add_argument("--puerto", type=int); o.set_defaults(f=cmd_servicio)
+    d = s.add_parser("destino"); d.add_argument("accion", choices=["crear", "iniciar", "salud", "detener"]); d.add_argument("--puerto", type=int)
+    d.add_argument("--nombre"); d.set_defaults(f=cmd_servicio)
+    m = s.add_parser("medir"); m.add_argument("--base", required=True); m.add_argument("--ruta", default="/api/salud")
+    m.add_argument("--n", type=int, default=50); m.add_argument("--concurrentes", type=int, default=5); m.set_defaults(f=cmd_servicio)
     i = s.add_parser("iniciar"); i.add_argument("solicitud"); i.add_argument("--sin-clonar", action="store_true"); i.set_defaults(f=cmd_iniciar)
     e = s.add_parser("evento")
     for k in ("--etapa", "--agente", "--tipo", "--resumen"):

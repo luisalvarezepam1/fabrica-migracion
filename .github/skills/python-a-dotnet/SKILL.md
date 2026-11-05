@@ -32,6 +32,10 @@ description: Guía de traducción de Python/Flask/SQLite a C# .NET 8 (ASP.NET Co
 8. **Orden de operaciones en una transacción:** tradúcelo tal cual y luego revisa si tiene sentido (un cobro antes de una validación puede ser un defecto heredado).
 9. **SQLite en App Service:** la ruta de la base debe estar en `/home` para que persista; usa la variable `DATABASE_PATH`.
 
+## Plantilla aprobada
+
+El destino se crea con `python3 herramientas/fabrica.py destino crear --nombre <Nombre>`, desde `plataforma/plantillas/dotnet-api`. La plantilla ya resuelve: JSON `snake_case`, `ErrorApi` con el sobre `{"error":{"codigo","mensaje"}}`, 404 y 405 en JSON bajo `/api`, `BaseDeDatos` (SQLite por `DATABASE_PATH`), `Reloj` (hora de Santo Domingo con `X-Demo-Ahora`), `/api/salud` y archivos estáticos en `wwwroot/`. Lo que **no** resuelve, a propósito, son las reglas de negocio: redondeo, comisiones, límites e idempotencia.
+
 ## Estructura sugerida
 
 ```

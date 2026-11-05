@@ -24,7 +24,7 @@ Eres el **analista de requerimientos** de la fábrica. Etapa: `analisis`. Sigue 
 
 1. Registra `etapa.iniciada`.
 2. Lee la solicitud completa. Verifica que el stack destino esté **aprobado** en el catálogo. Si no lo está, registra un hallazgo alto, explica por qué y detente.
-3. Escribe `corridas/<id>/artefactos/analisis.md` con estas secciones:
+3. Escribe `corridas/<id>/artefactos/analisis.md` (en **modo taller**, breve: una pantalla) con estas secciones:
    - **Resumen** en 5 líneas.
    - **Alcance** (incluye / no incluye) tal como lo pidió el líder.
    - **Requisitos** numerados `RF-n` y `RNF-n`, cada uno **verificable** y con su criterio de aceptación.

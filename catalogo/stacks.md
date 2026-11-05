@@ -14,6 +14,8 @@ Node.js, Go, contenedores propios, AKS, Azure Functions, bases NoSQL y cualquier
 
 ## Reglas del destino `dotnet8-appservice`
 
+- Se parte de la plantilla aprobada `plataforma/plantillas/dotnet-api` (`fabrica.py destino crear --nombre <Nombre>`).
+
 - Proyecto `src/Transferencias.Api` (o el nombre que fije el Arquitecto) y pruebas en `tests/`.
 - Importes en `decimal` o en enteros de centavos. **`Math.Round` por defecto redondea al par**: usa `MidpointRounding.AwayFromZero` cuando la regla de origen sea «mitad hacia arriba».
 - Zona horaria con `TimeZoneInfo.FindSystemTimeZoneById("America/Santo_Domingo")` (IANA; funciona en Linux).

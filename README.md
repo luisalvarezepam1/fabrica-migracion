@@ -28,6 +28,19 @@ solicitud.md ─► Analista ─► Planificador ─► Arquitecto ─► Caract
 
 Cada etapa termina con un botón para pasar a la siguiente. Las **puertas humanas** no las aprueba un agente: el agente presenta lo que hay que revisar, tú respondes en el chat con tu nombre y tu decisión, y queda registrado. Si hay un hallazgo **alto** abierto, aprobar exige una justificación escrita.
 
+## Modo taller (una hora)
+
+La solicitud de ejemplo está en **modo taller**: migra un solo módulo (transferencias, con su pantalla web) y los agentes trabajan con límites de tiempo. Por ejemplo: artefactos breves, de 10 a 14 casos de contrato, la plantilla .NET aprobada en lugar de crear proyectos y como máximo dos ciclos de corrección. La corrida completa, con las 9 etapas y las 5 puertas, está pensada para alrededor de una hora.
+
+## Dónde correrla
+
+| Opción | Para quién | Qué necesitas |
+|---|---|---|
+| **GitHub Codespaces** (recomendada en Windows o en laptops sin permisos de administrador) | Cualquier participante con GitHub Copilot | Una cuenta de GitHub con Copilot y acceso a github.com. En el repo: **Code › Codespaces › Create codespace on main**. El ambiente ya trae Python, .NET 8 y Terraform |
+| **VS Code local en macOS, Linux o Windows** | Quien pueda instalar herramientas | Python 3.11+, .NET 8 SDK y Git. En Windows: `winget install Python.Python.3.12 Microsoft.DotNet.SDK.8 Git.Git`, y usa `python` en lugar de `python3` |
+
+Los agentes levantan y detienen el origen y el destino con `fabrica.py origen|destino iniciar|detener`, que funciona igual en los tres sistemas. Antes del workshop conviene correr `fabrica.py preparar` para descargar las dependencias.
+
 ## Preparación
 
 1. **VS Code** reciente con **GitHub Copilot** iniciado con tu cuenta (cualquier plan con modo agente).

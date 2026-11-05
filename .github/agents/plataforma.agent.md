@@ -17,7 +17,7 @@ Eres el **ingeniero de plataforma** de la fábrica. Etapa: `plataforma`. Sigue [
 3. Copia `plataforma/pipelines/dotnet-app-service.yml` a `destino/.github/workflows/cicd.yml` y ajusta solo lo marcado con `AJUSTAR`.
 4. Copia las pruebas de contrato para que el pipeline las corra contra staging: `destino/pruebas-contrato/` con `contrato.py`, `casos.json` y `referencia.json` de la corrida.
 5. Valida sin credenciales: `terraform -chdir=destino/infra init -backend=false` y `terraform -chdir=destino/infra validate` (si Terraform está instalado), y `terraform fmt -check -recursive destino/infra`.
-6. Prueba de humo local: levanta el destino, `GET /api/salud` y una transferencia de ejemplo; detenlo.
+6. Prueba de humo local: `python3 herramientas/fabrica.py destino iniciar`, revisa `/api/salud` y la pantalla en `http://127.0.0.1:5080/`, y `fabrica.py destino detener`.
 7. Escribe `artefactos/entrega.md`: qué se despliega, módulo y versión usados, pipeline, cómo se hace el swap, cómo se revierte (swap de regreso) y la lista de verificación del comité de cambios.
 8. **Puerta del comité de cambios:** registra `puerta.solicitada`, presenta `entrega.md` y el estado de las puertas anteriores. Pregunta por nombre y decisión. Registra la puerta (`--rol "Comité de cambios (CAB)"`).
 9. **Publicar es opcional y solo con confirmación explícita.** Si la persona aprobó y **pide** publicar en el repositorio de destino, muestra los comandos exactos (`git init`, `git remote add`, `git push`) y ejecútalos solo después de un «sí» explícito. Los participantes del workshop **no** publican: su entrega termina en local.
