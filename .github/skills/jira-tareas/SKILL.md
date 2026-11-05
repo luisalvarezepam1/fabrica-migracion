@@ -34,5 +34,5 @@ python3 .github/skills/jira-tareas/scripts/jira.py mover T-ARQ "En curso"       
 python3 .github/skills/jira-tareas/scripts/jira.py comentar T-ARQ "Diseño aprobado por ... · artefactos: ..."
 ```
 
-- `mover` acepta el nombre de la transición o del estado destino. Si no existe, muestra las disponibles (los nombres dependen del idioma de tu Jira: «En curso», «Listo», «In Progress», «Done»).
+- `mover` acepta el nombre de la transición o del estado destino, y traduce «Por hacer», «En curso», «En revisión» y «Listo» a sus equivalentes en inglés (To Do, In Progress, In Review, Done). Si no encuentra la transición, muestra las disponibles.
 - El mapa ref → clave queda en `corridas/<id>/jira.json` y en `estado.json`.

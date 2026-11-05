@@ -45,6 +45,14 @@ def cargar_env():
 
 
 ENV = cargar_env()
+
+# Los agentes usan los estados en español; Jira puede tenerlos en inglés o con otros nombres.
+ALIAS_ESTADOS = {
+    "por hacer": ["to do", "selected for development", "backlog", "tareas por hacer"],
+    "en curso": ["in progress", "en progreso"],
+    "en revisión": ["in review", "en revision", "review"],
+    "listo": ["done", "finalizado", "hecho", "listo"],
+}
 LOCAL = ENV.get("JIRA_MODO") == "local" or not all(ENV.get(k) for k in ("JIRA_URL", "JIRA_EMAIL", "JIRA_TOKEN", "JIRA_PROYECTO"))
 
 
@@ -174,7 +182,8 @@ def cmd_mover(clave, estado):
     mapa, ref, key = resolver(c, clave)
     if not LOCAL and mapa["modo"] == "jira":
         trs = api("GET", f"/rest/api/3/issue/{key}/transitions")["transitions"]
-        objetivo = next((t for t in trs if t["name"].lower() == estado.lower() or t["to"]["name"].lower() == estado.lower()), None)
+        candidatos = [estado.lower()] + ALIAS_ESTADOS.get(estado.lower(), [])
+        objetivo = next((t for c in candidatos for t in trs if t["name"].lower() == c or t["to"]["name"].lower() == c), None)
         if not objetivo:
             sys.exit(f"Transiciones disponibles para {key}: {', '.join(t['name'] + ' -> ' + t['to']['name'] for t in trs)}")
         api("POST", f"/rest/api/3/issue/{key}/transitions", {"transition": {"id": objetivo["id"]}})
