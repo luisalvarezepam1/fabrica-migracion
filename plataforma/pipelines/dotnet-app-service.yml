@@ -1,0 +1,123 @@
+# Plantilla aprobada de CI/CD para un destino .NET 8 en Azure App Service (camino dorado).
+# La fábrica la copia a destino/.github/workflows/cicd.yml y solo ajusta lo marcado con «AJUSTAR».
+#
+# Flujo: pruebas -> infraestructura -> despliegue al slot staging -> pruebas de contrato contra staging
+#        -> APROBACIÓN HUMANA (environment "produccion" con revisores obligatorios) -> swap a producción.
+name: cicd
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROYECTO: src/Transferencias.Api/Transferencias.Api.csproj   # AJUSTAR
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet test --configuration Release
+      - run: dotnet publish "$PROYECTO" --configuration Release --output publicar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: publicar
+
+  staging:
+    if: github.event_name != 'pull_request'
+    needs: pruebas
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.infra.outputs.url_staging }}
+    outputs:
+      app: ${{ steps.infra.outputs.app }}
+      url: ${{ steps.infra.outputs.url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Infraestructura (Terraform, módulo aprobado)
+        id: infra
+        working-directory: infra
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RG }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_SA }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=${{ github.event.repository.name }}.tfstate" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
+          terraform apply -input=false -auto-approve
+          echo "app=$(terraform output -raw app_name)" >> "$GITHUB_OUTPUT"
+          echo "url=$(terraform output -raw url)" >> "$GITHUB_OUTPUT"
+          echo "url_staging=$(terraform output -raw url_staging)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: publicar
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ steps.infra.outputs.app }}
+          slot-name: staging
+          package: publicar
+      - name: Esperar a staging
+        run: |
+          for i in $(seq 1 30); do curl -fsS "${{ steps.infra.outputs.url_staging }}/api/salud" && exit 0; sleep 10; done; exit 1
+      - name: Pruebas de contrato contra staging
+        run: |
+          python3 pruebas-contrato/contrato.py comparar \
+            --base "${{ steps.infra.outputs.url_staging }}" \
+            --casos pruebas-contrato/casos.json \
+            --referencia pruebas-contrato/referencia.json \
+            --reporte reporte-equivalencia.md
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-equivalencia
+          path: reporte-equivalencia.md
+
+  produccion:
+    needs: staging
+    runs-on: ubuntu-latest
+    # El environment "produccion" tiene revisores obligatorios: aquí decide el comité de cambios.
+    environment:
+      name: produccion
+      url: ${{ needs.staging.outputs.url }}
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Swap staging -> producción
+        run: |
+          az webapp deployment slot swap -g rg-fabrica-net -n "${{ needs.staging.outputs.app }}" --slot staging --target-slot production   # AJUSTAR grupo
+      - name: Prueba de humo en producción
+        run: |
+          for i in $(seq 1 20); do curl -fsS "${{ needs.staging.outputs.url }}/api/salud" && exit 0; sleep 10; done; exit 1

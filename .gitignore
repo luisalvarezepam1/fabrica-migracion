@@ -1,0 +1,18 @@
+# Secretos
+.env
+
+# Espacio de trabajo de cada corrida (no se versiona en la fábrica)
+fuente/
+destino/
+corridas/*
+!corridas/.gitkeep
+
+# Herramientas
+.venv*/
+__pycache__/
+*.pyc
+.terraform/
+*.tfstate*
+bin/
+obj/
+.DS_Store
