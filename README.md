@@ -44,7 +44,7 @@ La guía detallada, con lo que debes ver en cada paso, está en [docs/guia-paso-
 
 
 1. En el chat, elige el agente **Fabrica** y escribe `/iniciar-migracion`.
-2. Sigue los botones: **1 · Analizar el requerimiento**, **2 · Crear el plan en Jira**, y así hasta **9 · Documentar y generar el replay**.
+2. Sigue los botones: **1 · Analizar el requerimiento**, **2 · Crear el plan de trabajo**, y así hasta **9 · Documentar y generar el replay**.
 3. En cada puerta, lee lo que te muestra el agente **antes** de aprobar. El replay mide cuánto tardaste.
 4. Al final abre `corridas/<id>/replay.html` en tu navegador.
 

@@ -88,7 +88,7 @@ Completa `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` (créalo en https://id.atlassian
 
 ## Paso 8 · Etapa 2: plan en Jira (Planificador)
 
-1. Da clic en **Keep** para conservar los cambios del análisis y luego en **«2 · Crear el plan en Jira»**. El agente cambia a **Planificador**; envía el mensaje.
+1. Da clic en **Keep** para conservar los cambios del análisis y luego en **«2 · Crear el plan de trabajo»**. El agente cambia a **Planificador**; envía el mensaje.
 2. Aprueba `fabrica.py estado`, `fabrica.py evento …` y `jira.py crear-plan …`. Da **Keep** a `plan-jira.json`.
 3. Resultado:
    - **Con `.env`:** una épica y sus tareas en Jira, más un espejo en `corridas/<id>/tareas/` con `tablero.md` y un archivo por tarea con enlace a Jira.
