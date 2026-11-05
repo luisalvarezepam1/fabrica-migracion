@@ -73,6 +73,10 @@ dotnet run --project destino/src/Transferencias.Api --urls http://127.0.0.1:5080
 - Los agentes **nunca** leen `.env` ni ejecutan `git push`, `terraform apply`, `az` o despliegues sin tu confirmación explícita.
 - La infraestructura solo usa el módulo aprobado. El despliegue real lo hace el pipeline del repositorio de destino, con su propia aprobación del comité de cambios.
 
+## Costo de una corrida
+
+`python3 herramientas/fabrica.py costo` suma, desde el historial local de VS Code, los tokens de entrada y salida y los créditos de Copilot de cada agente desde que empezó la corrida, y estima el costo en USD (variable `FABRICA_USD_POR_CREDITO`, 0.01 por defecto). El replay muestra el total y el costo por etapa. Es una estimación: compárala con GitHub › Settings › Billing › Usage.
+
 ## Uso de premium requests
 
 Cada etapa consume solicitudes del plan de Copilot de quien la corre. Para ahorrar, usa un modelo de costo bajo en las etapas sencillas (Planificador, Bibliotecario) y uno más capaz en Arquitecto, Migrador y Revisor.

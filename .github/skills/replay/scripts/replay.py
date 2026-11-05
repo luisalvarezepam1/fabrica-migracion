@@ -31,6 +31,12 @@ def generar(corrida, etapas):
     inicio = _t(eventos[0]["ts"]) if eventos else None
     fin = _t(eventos[-1]["ts"]) if eventos else None
     e = html.escape
+    costo = json.loads((corrida / "costo.json").read_text(encoding="utf-8")) if (corrida / "costo.json").exists() else None
+    por_etapa = {}
+    if costo:
+        for d in costo["por_agente"].values():
+            pe = por_etapa.setdefault(d["etapa"], {"creditos": 0.0, "tokens": 0})
+            pe["creditos"] += d["creditos"]; pe["tokens"] += d["tokens_entrada"] + d["tokens_salida"]
 
     solicitadas = {}
     filas = []
@@ -60,7 +66,8 @@ def generar(corrida, etapas):
 
     carril = "".join(
         f"<div class='etapa {e(est['etapas'][k]['estado'])}'><b>{e(n)}</b><span>{e(ag)}</span><span class='est'>{e(est['etapas'][k]['estado'].replace('_', ' '))}</span>"
-        f"{'<span class=rol>Puerta: ' + e(rol) + '</span>' if rol else ''}</div>"
+        f"{'<span class=rol>Puerta: ' + e(rol) + '</span>' if rol else ''}"
+        f"{'<span class=cst>' + str(round(por_etapa[k]['creditos'], 2)) + ' créditos · ' + format(por_etapa[k]['tokens'], ',') + ' tokens</span>' if k in por_etapa else ''}</div>"
         for k, n, ag, rol in etapas)
     hall = "".join(f"<tr><td>{e(h['id'])}</td><td class='sev {e(h['severidad'])}'>{e(h['severidad'])}</td><td>{e(h['etapa'])}</td><td>{e(h['titulo'])}</td><td>{e(h['estado'])}{' · ' + e(h.get('resolucion', '')) if h.get('resolucion') else ''}</td></tr>"
                    for h in est.get("hallazgos", [])) or "<tr><td colspan='5'>Sin hallazgos.</td></tr>"
@@ -70,6 +77,11 @@ def generar(corrida, etapas):
     puertas = est.get("puertas", [])
     total = _dur((fin - inicio).total_seconds()) if inicio and fin else ""
 
+    kpis_costo = ""
+    if costo:
+        t = costo["total"]
+        kpis_costo = (f"<div class='kpi'><b>{t['creditos']}</b>créditos de Copilot</div><div class='kpi'><b>USD {t['usd_estimado']}</b>costo estimado</div>"
+                      f"<div class='kpi'><b>{(t['tokens_entrada'] + t['tokens_salida']):,}</b>tokens</div>")
     pagina = f"""<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Replay {e(est['id'])}</title><style>
 :root{{--f:#0f172a;--d:#64748b;--b:#e2e8f0;--a:#2563eb;--ok:#15803d;--al:#b45309;--er:#b91c1c}}
@@ -80,7 +92,7 @@ main{{max-width:1180px;margin:0 auto;padding:20px}}h2{{font-size:16px;margin:24p
 .carril{{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}}
 .etapa{{background:#fff;border:1px solid var(--b);border-radius:10px;padding:10px;display:grid;gap:2px;font-size:12px}}.etapa b{{font-size:13px}}
 .etapa.terminada{{border-color:#86efac;background:#f0fdf4}}.etapa.en_curso{{border-color:#93c5fd;background:#eff6ff}}.etapa.bloqueada{{border-color:#fca5a5;background:#fef2f2}}
-.est{{font-weight:600;text-transform:uppercase;font-size:11px;color:var(--d)}}.rol{{color:var(--al)}}
+.cst{{color:#0f766e;font-size:11px}}.est{{font-weight:600;text-transform:uppercase;font-size:11px;color:var(--d)}}.rol{{color:var(--al)}}
 ol{{list-style:none;padding:0;margin:0;border-left:2px solid var(--b)}}
 .ev{{position:relative;margin:0 0 10px 14px;background:#fff;border:1px solid var(--b);border-radius:10px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}}
 .ev:before{{content:"";position:absolute;left:-21px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--a)}}
@@ -93,7 +105,7 @@ table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(
 </style></head><body>
 <header><h1>Replay · {e(est['titulo'])}</h1><p>{e(est['id'])} · inicio {e(est.get('inicio', ''))}</p></header><main>
 <div class="kpis"><div class="kpi"><b>{total}</b>duración</div><div class="kpi"><b>{len(eventos)}</b>eventos</div>
-<div class="kpi"><b>{len(puertas)}</b>decisiones humanas</div><div class="kpi"><b>{len(est.get('hallazgos', []))}</b>hallazgos</div></div>
+<div class="kpi"><b>{len(puertas)}</b>decisiones humanas</div><div class="kpi"><b>{len(est.get('hallazgos', []))}</b>hallazgos</div>{kpis_costo}</div>
 {jira_html}<h2>Etapas</h2><div class="carril">{carril}</div>
 <h2>Hallazgos</h2><table><tr><th>Id</th><th>Severidad</th><th>Etapa</th><th>Título</th><th>Estado</th></tr>{hall}</table>
 <h2>Línea de tiempo</h2><ol>{''.join(filas)}</ol>

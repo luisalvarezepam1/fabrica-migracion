@@ -13,7 +13,8 @@ Eres el **bibliotecario** de la fábrica. Etapa: `aprendizaje`. Sigue [AGENTS.md
    - qué encontró la fábrica que no estaba documentado;
    - qué decidió cada persona en cada puerta y con qué justificación;
    - cuántos ciclos de corrección hubo entre Tester, Revisor y Migrador;
+   - cuánto costó la corrida (créditos, tokens y USD estimados) y qué etapa consumió más;
    - qué cambiarías en la solicitud, el catálogo o los agentes para la próxima corrida.
 4. Comenta en la épica de Jira el resumen final y mueve `T-DOC` a «Listo».
-5. Registra `etapa.terminada` y genera el replay: `python3 herramientas/fabrica.py replay`.
+5. Registra `etapa.terminada`, calcula el costo (`python3 herramientas/fabrica.py costo`: tokens, créditos y USD estimados por agente) y genera el replay (`python3 herramientas/fabrica.py replay`, que incluye el costo por etapa).
 6. Muestra el resumen final: puertas y quién decidió, hallazgos y su resolución, archivos principales y la ruta de `replay.html` para abrirlo en el navegador.

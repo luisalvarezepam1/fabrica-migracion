@@ -8,6 +8,7 @@ Uso:
   python3 herramientas/fabrica.py puerta --etapa analisis --rol "Líder" --decision aprobado --por "Nombre" --justificacion "..."
   python3 herramientas/fabrica.py estado
   python3 herramientas/fabrica.py replay
+  python3 herramientas/fabrica.py costo                         # tokens, créditos y USD por agente (historial local de VS Code)
 
 Servicios (iguales en Windows, macOS y Linux; en Windows usa `python` en lugar de `python3`):
   python3 herramientas/fabrica.py preparar                     # dependencias del origen y paquetes de la plantilla .NET
@@ -32,6 +33,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import servicios  # noqa: E402
+import costo  # noqa: E402
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 CORRIDAS = RAIZ / "corridas"
@@ -240,10 +242,20 @@ def cmd_estado(_a):
     return 0
 
 
+def cmd_costo(a):
+    c = pathlib.Path(a.corrida) if a.corrida else corrida_actual()
+    costo.imprimir(costo.calcular(c, a.raiz or RAIZ, ETAPAS))
+    return 0
+
+
 def cmd_replay(_a):
     sys.path.insert(0, str(RAIZ / ".github" / "skills" / "replay" / "scripts"))
     import replay  # noqa: E402
     c = corrida_actual()
+    try:
+        costo.calcular(c, RAIZ, ETAPAS)
+    except Exception as e:  # el replay no depende del costo
+        print(f"(No se pudo calcular el costo: {e})")
     salida = replay.generar(c, ETAPAS)
     print(f"Replay generado: {salida.relative_to(RAIZ)}")
     return 0
@@ -315,6 +327,7 @@ def main():
     ch.add_argument("--resolucion", required=True); ch.set_defaults(f=cmd_cerrar_hallazgo)
     s.add_parser("estado").set_defaults(f=cmd_estado)
     s.add_parser("replay").set_defaults(f=cmd_replay)
+    co = s.add_parser("costo"); co.add_argument("--corrida"); co.add_argument("--raiz", help=argparse.SUPPRESS); co.set_defaults(f=cmd_costo)
     a = p.parse_args()
     sys.exit(a.f(a))
 
